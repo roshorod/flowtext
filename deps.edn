@@ -1,0 +1,7 @@
+{:deps    {org.clojure/clojurescript {:mvn/version "1.11.4"}
+           com.bhauman/figwheel-main {:mvn/version "0.2.16"}
+           rum/rum                   {:mvn/version "0.12.8"}}
+ :paths   ["src"]
+ :aliases {:dev {:extra-paths ["resources"]
+                 :extra-deps  {com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}}
+                 :main-opts   ["-m" "figwheel.main" "-b" "dev" "-r"]}}}
