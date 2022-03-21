@@ -1,45 +1,104 @@
 (ns ^:figwheel-hooks flowtext.core
-  (:require [rum.core :as rum]
+  (:require [cljs.spec.alpha :as s]
+            [clojure.string :refer [split]]
+            [rum.core :as rum]
             [store.core :as store]
             [store.mixin :as mixin]))
 
 (enable-console-print!)
 (store/enable-state-print!)
 
-(rum/defcs section <
-  (mixin/store! (fn [{:keys [default-open?]}]
-                  (if (some? default-open?)
-                    {:open? default-open?}
-                    {:open? false}))
-                (fn [state [action _]]
-                  (case action
-                    :toggle   (update state :open? not)
-                    :increase (update state :counter inc))))
-  [{:keys [rum/action rum/state]}
-   {:keys [title size default-open? content]}]
-  [:div.content
-   [:button.content__button
-    {:on-click
-     (fn [_] (action :toggle))}
-    "Show counter"]
-   (if (:open? state)
-     [:div.hidden-content
-      [:h2.hidden-content__title title]
-      [:h4.hidden-content__text content]
-      [:div.hidden-content__counter.counter
-       [:h4.counter__number (or (:counter state) 0)]
-       [:button.counter__button_increase
-        {:on-click
-         (fn [_]
-           (action :increase))}
-        "Increase counter"]]])])
+(def line-class "editor__line")
+(def token-class "line__token")
+
+(defn make-element [^String content]
+  (let [element (.createElement js/document "span")]
+    (set! (.-textContent element) content)
+    element))
+
+(defn make-empty-line [target]
+  (let [element (.createElement js/document "div")
+        span    (.createElement js/document "span")]
+    (set! (.-className element) line-class)
+    (set! (.-className span) token-class)
+    (set! (.-innerHTML span) "<br>")
+    (.appendChild element span)
+    (.appendChild target element)
+    element))
+
+(defn token->line [token]
+  (loop [line? (.-parentElement token)]
+    (if (= (.-className line?) line-class)
+      line?
+      (recur (.-parentElement line?)))))
+
+(def line-string "<div class=\"editor__line\"><span class=\"line__token\">one</span><span class=\"line__token\">two</span></div>")
+
+(def token-regex #"<span class=\"line__token\">.*?</span>")
+
+(def content-regex #"(?<=\>).*(?=\<)")
+
+(def get-line-tokens #(re-seq token-regex %))
+(def get-token-content #(re-seq content-regex %))
+
+(defn transform-line [line]
+  (doseq [token (get-line-tokens (.-outerHTML line))]
+    (let [content (get-token-content token)]
+      (prn content))))
+
+(defn load-editor [editor]
+  (.addEventListener
+    editor
+    "keyup"
+    (fn [event]
+      (let [current-line (.getSelection  js/window)
+            current-node (.-focusNode current-line)]
+        ;; If false:
+        ;;; Make impossible replacing contenteditable node
+        ;; If true:
+        ;;; Make text tokens.
+        (if-let
+            [not-editor-node
+             (not
+               (and (= editor current-node)
+                    ;; if after empty line exist other line,
+                    ;; that prevent adding empty line,
+                    ;; when delete first line
+                    (not
+                      (= (.-innerHTML current-node) "<br>"))))]
+          (transform-line (token->line current-node))
+          ;; (js/console.log "Tokenize")
+          ;; (js/console.log (clj->js current-line))
+          ;; (js/console.log (token->line current-node))
+          ;; (js/console.log (.-parentElement current-node))
+          (make-empty-line editor))
+        
+        
+        ;; Take until enter was pressed or time out of 2-5 sec.
+        ;; https://stackoverflow.com/questions/4220126/run-javascript-function-when-user-finishes-typing-instead-of-on-key-up
+        
+        ;; Then take outerHTML form line parse it and add child elements
+        
+        ;; May make content checking of old string and new and old tokens,
+        ;; That may make elements without re-rendering.
+   
+        )))
+  (set! (.-contentEditable editor) true))
+
+(rum/defc editor-layout []
+  [:div#editor
+   [:div.editor__line
+    [:span.line__token "One two "]
+    [:span.line__token "three"]]])
+
+(defn post-render []
+  (let [editor (.getElementById js/document "editor")]
+    (load-editor editor)))
 
 (defn ^:after-load re-render []
   (rum/mount
-    (section
-      {:title         "Counter section"
-       :content       "Hello from counter state"
-       :default-open? true})
-    (js/document.getElementById "root")))
+    (editor-layout)
+    (.getElementById js/document "root"))
+  (post-render))
 
 (defonce start-up (re-render))

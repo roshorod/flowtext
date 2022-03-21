@@ -1,6 +1,6 @@
 (ns ^:figwheel-always store.core)
 
-(defonce state (atom {:test "test"}))
+(defonce state (atom {}))
 
 (defmulti action! (fn [state [action data]] action))
 
@@ -15,7 +15,8 @@
                [action data {:flowtext/action dispatch!}]))))
 
 (defn enable-state-print! []
-  (add-watch state
-             {}
-             (fn [k r old new]
-               (println new))))
+  (add-watch
+    state
+    {}
+    (fn [k r old new]
+      (println new))))

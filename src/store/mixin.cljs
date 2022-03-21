@@ -19,7 +19,7 @@
         (assoc rum-state :rum/local
                (atom (apply state args))))
       :else
-      (throw (ex-info "State must be a map or func.")))
+      (throw (ex-info "State must be a map or func." {})))
     :will-mount
     (fn [{:keys [rum/local rum/react-component] :as rum-state}]
       (add-watch local :rum/local
