@@ -1,10 +1,9 @@
-(ns ^:figwheel-hooks flowtext.core
-  (:require [components.editor :refer [editor]]
-            [store.core :as store]
+(ns ^:figwheel-hooks core.core
+  (:require [components.editor :refer [editor handle-input]]
+            [core.state :refer [enable-state-print!]]
             [rum.core :as r]))
 
 (enable-console-print!)
-(store/enable-state-print!)
 
 (defn ^:after-load re-render []
   (r/mount
