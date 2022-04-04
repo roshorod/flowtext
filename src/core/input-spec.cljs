@@ -1,0 +1,15 @@
+(ns ^:figwheel-always core.input-spec
+  (:require [cljs.spec.alpha :as s]))
+
+(def text-key-regex #"^[a-zA-Z0-9|._%+$&+,:;=?@#]")
+(def left-key-regex #"^ArrowLeft")
+(def right-key-regex #"^ArrowRight")
+
+(s/def ::text-key (s/and string? #(re-matches text-key-regex %)))
+(s/def ::left-key (s/and string? #(re-matches left-key-regex %)))
+(s/def ::right-key (s/and string?
+                          #(re-matches right-key-regex %)))
+
+(def text? #(s/valid? ::text-key %))
+(def left? #(s/valid? ::left-key %))
+(def right? #(s/valid? ::right-key %))

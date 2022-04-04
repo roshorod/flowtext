@@ -9,17 +9,27 @@
 
 (defmulti token identity)
 
+(defmethod token :selection/node [_]
+  (let [selection (js/getSelection)
+        node      (.-focusNode selection)]
+    (try
+      (js/ReactDOM.findDOMNode
+        (.-parentElement node)) ;; Selection select text of node
+      (catch :default _
+        (throw
+          (ex-info "Canno't find react node." {}
+                   :react-node-error))))))
+
 (defmethod token :insert/char [_ char]
   (go
     (let [selection (js/getSelection)
-          node      (.-focusNode selection)
-          rnode     (js/ReactDOM.findDOMNode
-                      (.-parentElement node))
+          node      (token :selection/node)
           offset    (-> selection .-focusOffset)
-          line-id   (.getAttribute
-                      (.-parentElement rnode) "line")
-          token-id  (.getAttribute rnode "token")
-          content   (.-innerText rnode)]
+          line-id   (-> node
+                        .-parentElement
+                        (.getAttribute "line"))
+          token-id  (.getAttribute node "token")
+          content   (.-innerText node)]
       (dispatch
         :token-update
         {:line-id  (js/parseInt line-id)
@@ -28,4 +38,4 @@
       (.removeAllRanges selection)
       (<! (timeout 50))
       (core.input/input
-        :select/token selection rnode (inc offset)))))
+        :select/token selection node (inc offset)))))
