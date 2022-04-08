@@ -1,11 +1,29 @@
 (ns ^:figwheel-always core.token
-  (:refer-clojure :exclude [char])
+  (:refer-clojure :exclude [char map])
   (:require [cljs.core.async :refer-macros [go]]
             [cljs.core.async :refer [<! >! timeout]]
             [core.state :refer [dispatch]]))
 
 (defn- insert [string char index]
   (str (subs string 0 index) char (subs string index)))
+
+(defn- assoc-index [map]
+  (->> map
+       (keep-indexed (fn [index val]
+                       (assoc val :id index)))))
+
+(defn append-token [map token index]
+  (let [[left right] (split-at index map)]
+    (into [] (assoc-index
+               (concat left [token] right)))))
+
+(defn append-token-map [lmap rmap index]
+  (let [[left right] (split-at index lmap)]
+    (into [] (-> []
+                 (concat left)
+                 (concat rmap)
+                 (concat right)
+                 assoc-index))))
 
 (defmulti token identity)
 
