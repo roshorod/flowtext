@@ -1,4 +1,4 @@
-(ns ^:figwheel-always core.input-spec
+(ns ^:figwheel-always flowtext.spec
   (:require [cljs.spec.alpha :as s]))
 
 (def text-key-regex #"^[a-zA-Z0-9|._%+$&+,:;=?@#]")
