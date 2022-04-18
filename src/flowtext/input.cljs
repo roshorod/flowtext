@@ -1,7 +1,9 @@
 (ns ^:figwheel-always flowtext.input
   (:require [cljs.core.async :refer-macros [go-loop]]
-            [cljs.core.async :refer [<! chan]]
+            [cljs.core.async :refer [<! chan dropping-buffer]]
             [flowtext.utils :refer [char->content
+                                    valid-offset
+                                    content->remove
                                     node->text]]
             [flowtext.spec :as spec]
             [citrus.core :as citrus]))
@@ -11,7 +13,7 @@
 
 (def selection (js/getSelection))
 
-(def event-ch (chan))
+(def event-ch (chan (dropping-buffer 1)))
 
 (defn- token? []
   (let [node (.-focusNode selection)]
@@ -69,11 +71,11 @@
         left-token    (-> (.getAttribute node token-attrib)
                           js/parseInt)
         right-token   (inc left-token)
-        left-content  (subs content 0 offset)
-        right-content (str " " (subs content offset length))]
+        left-content  (str (subs content 0 offset) " ")
+        right-content (subs content offset length)]
     (citrus/dispatch!
       r
-      :lines :line/append
+      :lines :token/append
       {:line-id  line
        :token-id left-token
        :map      (-> []
@@ -81,8 +83,38 @@
                        {:id left-token :content left-content})
                      (conj
                        {:id right-token :content right-content}))
-       :offset   1
+       :offset   0
        :node     (-> node .-nextSibling node->text)})))
+
+(defn backspace [r]
+  (let [node    (token?)
+        line    (-> node .-parentElement
+                    (.getAttribute line-attrib)
+                    js/parseInt)
+        token   (-> (.getAttribute node token-attrib)
+                    js/parseInt)
+        offset  (-> selection .-focusOffset)
+        content (content->remove (.-innerText node) offset)]
+    (cond
+      (not (pos-int? offset))
+      (citrus/dispatch!
+        r
+        :lines :token/concat
+        {:line-id  line
+         :token-id token
+         :node     (node->text (.-previousSibling node))
+         :offset   (valid-offset (dec offset))
+         :content  content})
+      
+      (not-empty content)
+      (citrus/dispatch!
+        r
+        :lines :token/update
+        {:line-id  line
+         :token-id token
+         :node     (node->text node)
+         :offset   (valid-offset (dec offset))
+         :content  content}))))
 
 (defn next-offset []
   (let [offset (.-focusOffset selection)]
@@ -119,6 +151,9 @@
              (spec/text? key)
              (insert reconciler key)
 
+             (spec/backspace? key)
+             (backspace reconciler)
+             
              (spec/space? key)
              (whitespace reconciler))
            (catch :default e

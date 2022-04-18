@@ -1,8 +1,18 @@
 (ns ^:figwheel-always flowtext.utils
   (:refer-clojure :exclude [map]))
 
+(defn valid-offset [offset]
+  (if (pos-int? offset)
+    offset
+    0))
+
 (defn char->content [string char index]
   (str (subs string 0 index) char (subs string index)))
+
+(defn content->remove [content offset]
+  (let [length (count content)]
+    (str (subs content 0 (dec offset))
+         (subs content offset length))))
 
 (defn node->text [node] (.-firstChild node))
 

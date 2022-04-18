@@ -2,6 +2,7 @@
   (:require [cljs.core.async :refer [poll! <!]]
             [cljs.core.async :refer-macros [go]]
             [flowtext.input :as input]
+            [flowtext.utils :as utils]
             [flowtext.effects :refer [selection-ch
                                       selection-args-ch]]))
 
@@ -12,5 +13,6 @@
      (when-let [action (poll! selection-ch)]
        (go (let [{:keys [offset node]} (<! selection-args-ch)]
              (case action
-               :select (input/select offset node)))))
+               :select (input/select
+                         (utils/valid-offset offset) node)))))
      state)})
