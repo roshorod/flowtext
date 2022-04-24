@@ -1,7 +1,7 @@
 (ns ^:fighweel-always flowtext.components.editor
   (:require [flowtext.components.line :refer [line]]
-            [flowtext.input :refer [insert event-ch]]
             [flowtext.mixins.selection :as selection]
+            [flowtext.input.handler :refer [handle]]
             [cljs.core.async :refer [put!]]
             [citrus.core :as citrus]
             [rum.core :as r]))
@@ -14,9 +14,7 @@
     [:div#editor
      {:content-editable                  true
       :suppress-content-editable-warning true
-      :on-key-down #(do (.persist %)
-                        (.preventDefault %)
-                        (put! event-ch %))}
+      :on-key-down                       #(handle % r)}
      (->> state
           (mapv #(-> (line %)
                      (r/with-key (:id %)))))]))

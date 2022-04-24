@@ -1,4 +1,4 @@
-(ns ^:figwheel-always flowtext.spec
+(ns ^:figwheel-always flowtext.input.spec
   (:require [cljs.spec.alpha :as s]))
 
 (def text-key-regex #"^[a-zA-Z0-9|._%+$&+,:;=?@#]")
@@ -21,3 +21,14 @@
 (def right? #(s/valid? ::right-key %))
 (def space? #(s/valid? ::space-key %))
 (def backspace? #(s/valid? ::backspace-key %))
+
+(s/def ::nil-offset (s/and number? zero?))
+(s/def ::offset (s/and number? pos-int?))
+
+(def wrap-offset?
+  (fn [offset line token]
+    (and (s/valid? ::nil-offset offset)
+         (s/valid? ::offset line)
+         (s/valid? ::nil-offset token))))
+(def start-offset? #(s/valid? ::nil-offset %))
+(def offset? #(s/valid? ::offset %))

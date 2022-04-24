@@ -1,24 +1,22 @@
 (ns ^:fighweel-always flowtext.controllers.line
-  (:require [flowtext.utils :as utils]
+  (:require [flowtext.input.utils :as utils]
+            [flowtext.input.token :as token]
+            [citrus.core :as citrus]
             [clojure.string :refer [trim]]))
 
 (def initial-state
   [{:id 0 :tokens [{:id 0 :content "first "}
                    {:id 1 :content "second "}
-                   {:id 2 :content "third"}
-                   {:id 3 :content " "}]}
+                   {:id 2 :content "third"}]}
    {:id 1 :tokens [{:id 0 :content "first "}
                    {:id 1 :content "second "}
-                   {:id 2 :content "third"}
-                   {:id 3 :content " "}]}
+                   {:id 2 :content "third"}]}
    {:id 2 :tokens [{:id 0 :content "first "}
                    {:id 1 :content "second "}
-                   {:id 2 :content "third"}
-                   {:id 3 :content " "}]}
+                   {:id 2 :content "third"}]}
    {:id 3 :tokens [{:id 0 :content "first "}
                    {:id 1 :content "second "}
-                   {:id 2 :content "third"}
-                   {:id 3 :content " "}]}])
+                   {:id 2 :content "third"}]}])
 
 (defmulti control (fn [event] event))
 
@@ -29,43 +27,77 @@
   {:state initial-state})
 
 (defmethod control :token/update [_ args state]
-  (let [[{:keys [line-id token-id content offset node]}] args]
+  (let [[{:keys [line token content offset node]}] args]
     {:state
-     (assoc-in state [line-id :tokens token-id]
-               (-> (get-in state [line-id :tokens token-id])
-                   (assoc :content content)))
+     (assoc-in
+       state
+       [line :tokens token]
+       (-> (get-in state [line :tokens token])
+           (assoc :content content)))
      :input {:action :select :node node :offset offset}}))
 
 (defmethod control :token/append [_ args state]
-  (let [[{:keys [line-id token-id map offset node]}] args]
-    (let [tokens (->> (get-in state [line-id :tokens])
-                      (filterv #(not= token-id (:id %))))]
-      {:state
-       (assoc-in state [line-id :tokens]
-                 (utils/assoc-token-map tokens map token-id))
-       :input {:action :select :node node :offset offset}})))
+  (let [[{:keys [line token map offset node select]}] args]
+    (let [tokens (->> (get-in state [line :tokens])
+                      (filterv #(not= token (:id %))))]
+      (-> {:state
+           (assoc-in
+             state
+             [line :tokens]
+             (utils/assoc-token-map tokens map token))}
+          (cond-> (or (nil? select) (true? select))
+            (assoc
+              :input
+              {:action :select :node node :offset offset}))))))
 
 (defmethod control :token/concat [_ args state]
-  (let [[{:keys [line-id token-id content offset node]}] args]
-    (cond
-      ;; When need concat token on same line
-      (not (= token-id 0))
-      (let [ltoken    (get-in
-                        state
-                        [line-id :tokens (dec token-id)])
-            ltoken-id (js/parseInt (:id ltoken))
-            lcontent  (:content ltoken)
-            tokens    (->> (get-in state [line-id :tokens])
-                           (filterv #(not= token-id (:id %)))
-                           (filterv #(not= ltoken-id (:id %))))
-            llength   (count lcontent)
-            content   (utils/content->remove
-                        (str lcontent content)
-                        llength)
-            token     (-> ltoken
-                          (assoc :content content))]
-        {:state
-         (assoc-in state [line-id :tokens]
-                   (utils/assoc-token-map tokens [token] ltoken-id))
-         :input {:action :select :node node :offset (dec llength)}})
-      :default (prn "else"))))
+  (let [[{:keys [line token content offset node]}] args]
+    (let [left   (get-in state [line :tokens (dec token)])
+          tokens (->> (get-in state [line :tokens])
+                      (filterv #(not= token (:id %)))
+                      (filterv #(not= (:id left) (:id %))))
+          new    (-> left
+                     (assoc :content
+                            (utils/content->remove
+                              (str (:content left) content)
+                              (count (:content left)))))]
+      {:state
+       (assoc-in
+         state
+         [line :tokens]
+         (utils/assoc-token-map tokens [new] (:id left)))
+       :input {:action :select
+               :node   node
+               :offset (dec (count (:content left)))}})))
+
+(defmethod control :token/delete [_ args state]
+  (let [[{:keys [line token node select prev]}] args]
+    (let [tokens (->> (get-in state [line :tokens])
+                      (filterv #(not= token (:id %))))
+          prev   @prev]
+      (-> {:state (assoc-in state [line :tokens] tokens)}
+          (cond-> (or (nil? select) (true? select))
+            (assoc
+              :input
+              {:action :select
+               :node   prev
+               :offset (utils/node->length prev)}))))))
+
+(defmethod control :line/wrap-back [_ args state]
+  (let [[{:keys [line node select]}] args]
+    (let [curr  (get-in state [line :tokens])
+          prev  (get-in state [(dec line) :tokens])
+          new   (utils/assoc-token-map prev curr (count prev))
+          state (utils/assoc-tokens-index
+                  (filterv some?
+                           (map-indexed
+                             #(if (not= line %1) %2) state)))
+          node  (utils/line->last-token
+                  (utils/node->prev-line node))]
+      (-> {:state (assoc-in state [(dec line) :tokens] new)}
+          (cond-> (or (nil? select) (true? select))
+            (assoc
+              :input
+              {:action :select
+               :node   node
+               :offset (utils/node->length node)}))))))
