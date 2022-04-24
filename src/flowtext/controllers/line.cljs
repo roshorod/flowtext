@@ -1,4 +1,5 @@
 (ns ^:fighweel-always flowtext.controllers.line
+  (:refer-clojure :exclude [map])
   (:require [flowtext.input.utils :as utils]
             [flowtext.input.token :as token]
             [citrus.core :as citrus]
@@ -101,3 +102,35 @@
               {:action :select
                :node   node
                :offset (utils/node->length node)}))))))
+
+(defmethod control :line/wrap-next [_ args state]
+  (let [[{:keys [line token content node offset select]}] args]
+    (let [left      (subs content 0 offset)
+          right     (subs content offset (count content))
+          tokens    (get-in state [line :tokens])
+          state     (filter #(not= line (:id %)) state)
+          curr-line (into (->> tokens
+                               (filterv #(> token (:id %))))
+                          [{:id token :content
+                            (if (empty? left)
+                              "  "
+                              left)}])
+          
+          next-line (->> tokens
+                         (filter #(and (not= token (:id %))
+                                       (< token (:id %))))
+                         (into [{:id 0 :content right}])
+                         (utils/assoc-tokens-index))
+          
+          map (if (js/isNaN line)
+                      []
+                      [{:id line :tokens curr-line}
+                       {:id (inc line) :tokens next-line}])]
+      (-> {:state (utils/assoc-token-map state map line)}
+          (cond-> (or (nil? select) (true? select))
+            (assoc
+              :input
+              {:action :select
+               :node   (utils/line->first-token
+                         (utils/node->next-line node))
+               :offset 0}))))))

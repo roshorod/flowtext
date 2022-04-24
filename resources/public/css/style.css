@@ -1,3 +1,11 @@
 p {
   white-space: pre;
 }
+
+span {
+  display: inline-block;
+}
+
+#editor:focus {
+  outline: none;
+}

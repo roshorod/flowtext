@@ -31,11 +31,18 @@
   (let [line (.-parentElement node)]
     (.-previousSibling line)))
 
+(defn node->next-line [node]
+  (let [line (.-parentElement node)]
+    (.-nextSibling line)))
+
 (defn node->prev-line-offset [node]
   (count (.-textContent (node->prev-line node))))
 
 (defn line->last-token [line]
   (.-lastChild line))
+
+(defn line->first-token [line]
+  (.-firstChild line))
 
 (defn assoc-tokens-index [map]
   (->> map

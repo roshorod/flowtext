@@ -6,6 +6,7 @@
 (def right-key-regex #"^ArrowRight")
 (def space-key-regex #"^ ")
 (def backspace-key-regex #"^Backspace")
+(def enter-key-regex #"^Enter")
 
 (s/def ::text-key (s/and string? #(re-matches text-key-regex %)))
 (s/def ::left-key (s/and string? #(re-matches left-key-regex %)))
@@ -15,12 +16,15 @@
   (s/and string? #(re-matches space-key-regex %)))
 (s/def ::backspace-key
   (s/and string? #(re-matches backspace-key-regex  %)))
+(s/def ::enter-key
+  (s/and string? #(re-matches enter-key-regex %)))
 
 (def text? #(s/valid? ::text-key %))
 (def left? #(s/valid? ::left-key %))
 (def right? #(s/valid? ::right-key %))
 (def space? #(s/valid? ::space-key %))
 (def backspace? #(s/valid? ::backspace-key %))
+(def enter? #(s/valid? ::enter-key %))
 
 (s/def ::nil-offset (s/and number? zero?))
 (s/def ::offset (s/and number? pos-int?))

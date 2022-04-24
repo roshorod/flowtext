@@ -4,6 +4,7 @@
             [flowtext.input.prev :as prev]
             [flowtext.input.backspace :refer [backspace]]
             [flowtext.input.whitespace :refer [whitespace]]
+            [flowtext.input.enter :refer [enter]]
             [flowtext.input.insert :refer [insert]]))
 
 (defn handle [^js/Event event reconciler]
@@ -22,6 +23,9 @@
 
         (spec/backspace? key)
         (backspace reconciler)
+
+        (spec/enter? key)
+        (enter reconciler)
         
         (spec/space? key)
         (whitespace reconciler))
