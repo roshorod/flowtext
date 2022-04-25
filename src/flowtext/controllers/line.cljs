@@ -77,12 +77,20 @@
                       (filterv #(not= token (:id %))))
           prev   @prev]
       (-> {:state (assoc-in state [line :tokens] tokens)}
-          (cond-> (or (nil? select) (true? select))
+          (cond-> (and (or (nil? select)
+                           (true? select))
+                       (not= (nil? prev)))
             (assoc
               :input
               {:action :select
                :node   prev
-               :offset (utils/node->length prev)}))))))
+               :offset (utils/node->length prev)}))
+          (cond-> (nil? prev) ;; Select previous line
+            (assoc
+              :input
+              {:action :select
+               :node   (utils/line->last-token
+                         (utils/node->prev-line node))}))))))
 
 (defmethod control :line/wrap-back [_ args state]
   (let [[{:keys [line node select]}] args]
@@ -113,19 +121,23 @@
                                (filterv #(> token (:id %))))
                           [{:id token :content
                             (if (empty? left)
-                              "  "
+                              " "
                               left)}])
           
           next-line (->> tokens
                          (filter #(and (not= token (:id %))
                                        (< token (:id %))))
-                         (into [{:id 0 :content right}])
+                         (into [{:id 0 :content
+                                 (if (empty? right)
+                                   " "
+                                   right)}])
                          (utils/assoc-tokens-index))
           
           map (if (js/isNaN line)
-                      []
-                      [{:id line :tokens curr-line}
-                       {:id (inc line) :tokens next-line}])]
+                []
+                [{:id line :tokens curr-line}
+                 {:id (inc line) :tokens next-line}])]
+      (prn left right)
       (-> {:state (utils/assoc-token-map state map line)}
           (cond-> (or (nil? select) (true? select))
             (assoc
