@@ -5,30 +5,32 @@
             [flowtext.input.backspace :refer [backspace]]
             [flowtext.input.whitespace :refer [whitespace]]
             [flowtext.input.enter :refer [enter]]
-            [flowtext.input.insert :refer [insert]]))
+            [flowtext.input.insert :refer [insert]]
+            [citrus.core :as c]))
 
-(defn handle [^js/Event event reconciler]
+(defn handle [^js/Event event r]
   (let [key (.-key event)]
     (.preventDefault event)
     (try
       (cond
         (spec/right? key)
-        (next/offset)
+        (c/dispatch! r :select :next/offset)
 
         (spec/left? key)
-        (prev/offset)
+        (c/dispatch! r :select :prev/offset)
+        
         
         (spec/text? key)
-        (insert reconciler key)
+        (insert r key)
 
         (spec/backspace? key)
-        (backspace reconciler)
+        (backspace r)
 
         (spec/enter? key)
-        (enter reconciler)
+        (enter r)
         
         (spec/space? key)
-        (whitespace reconciler))
+        (whitespace r))
       (catch :default e
         (case (ex-cause e)
           :next/token (next/token)

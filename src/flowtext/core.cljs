@@ -1,6 +1,7 @@
 (ns ^:figwheel-hooks flowtext.core
   (:require [flowtext.components.editor :refer [editor]]
             [flowtext.controllers.line :as lines]
+            [flowtext.controllers.select :as select]
             [flowtext.effects :as effects]
             [citrus.core :as citrus]
             [rum.core :as r]))
@@ -10,8 +11,10 @@
 (defonce reconciler
   (citrus/reconciler
     {:state           (atom {})
-     :controllers     {:lines lines/control}
-     :effect-handlers {:input effects/input}}))
+     :controllers     {:lines  lines/control
+                       :select select/control}
+     :effect-handlers {:input    effects/input
+                       :dispatch effects/dispatch}}))
 
 (defonce init-controllers
   (citrus/broadcast! reconciler :init))
