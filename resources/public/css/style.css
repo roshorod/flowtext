@@ -1,3 +1,17 @@
+:root {
+  --bottom: 10px;
+  --right: 10px;
+
+  --font-size: 18px;
+
+  --line-weight: 300;
+  --line-number-weight: 100;
+  
+  --background-color: #2e3138;
+  --line-number-color: #9e9e9e;
+  --font-color: white;
+}
+
 p {
   white-space: pre;
 }
@@ -6,6 +20,61 @@ span {
   display: inline-block;
 }
 
+html {
+  color: var(--font-color);
+  background: var(--background-color);
+  
+  font-family: 'Lato', sans-serif;
+}
+
 #editor:focus {
   outline: none;
 }
+
+#editor {
+  width: 100%;
+}
+
+h4 {
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+.editor-wrapper {
+  display: flex;
+}
+
+.line-number-wrapper > * {
+  width: 30px;
+  
+  margin-bottom: var(--bottom);
+  
+  font-size: var(--font-size);
+  font-weight: var(--line-number-weight);
+  text-align: center;
+  
+  color: var(--line-number-color);
+  
+  user-select: none;
+}
+
+.line {
+  width: 100wh;
+}
+
+.line-number-wrapper {
+  margin-right: var(--right);
+}
+
+.line-wrapper > *  {
+  margin-bottom: var(--bottom);
+  
+  font-size: var(--font-size);
+  font-weight: var(--line-weight);
+  
+  letter-spacing: .4px;
+}
+
