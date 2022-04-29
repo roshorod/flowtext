@@ -1,5 +1,4 @@
-(ns ^:fighweel-always flowtext.data.node
-  (:require [flowtext.data.token :as t]))
+(ns ^:fighweel-always flowtext.data.node)
 
 (deftype ^:private Next [node]
   IDeref
@@ -27,11 +26,13 @@
      :next   (Next. node)
      :prev   (Prev. node)}))
 
-(defn node->token-id [node]
-  (-> node (.getAttribute t/attribute)))
-
 (defn node->text [node]
   (-> node .-firstChild))
 
 (defn node->text-length [node]
   (.-length (node->text node)))
+
+(defn node->prev-line [node]
+  (-> node
+      .-parentElement
+      .-previousSibling))

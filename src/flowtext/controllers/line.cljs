@@ -137,7 +137,6 @@
                 []
                 [{:id line :tokens curr-line}
                  {:id (inc line) :tokens next-line}])]
-      (prn left right)
       (-> {:state (utils/assoc-token-map state map line)}
           (cond-> (or (nil? select) (true? select))
             (assoc

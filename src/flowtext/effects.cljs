@@ -8,8 +8,8 @@
 (defmulti input (fn [_ _ params] (:action params)))
 
 (defmethod input :select [_ _ args]
-  (put! selection-args-ch args)
-  (put! selection-ch :select))
+  (put! selection-ch :select)
+  (put! selection-args-ch args))
 
-(defn dispatch [r c {:keys [action]}]
-  (citrus/dispatch! r c action))
+(defn dispatch [r c {:keys [control action args]}]
+  (citrus/dispatch! r control action args))

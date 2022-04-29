@@ -18,7 +18,12 @@
 
         (spec/left? key)
         (c/dispatch! r :select :prev/offset)
-        
+
+        (spec/down? key)
+        (c/dispatch! r :select :next/line)
+
+        (spec/up? key)
+        (c/dispatch! r :select :prev/line)
         
         (spec/text? key)
         (insert r key)
