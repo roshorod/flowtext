@@ -5,9 +5,9 @@
  :output-to  "resources/public/main.js"
  :output-dir "resources/public/out/"
  :asset-path "out/"
-
- :pretty-print true
- :source-map   true
  
- :recompile-dependents false
- :reload-dependents    false}
+ ;; :closure-defines {"re_frame.trace.trace_enabled_QMARK_" true}
+ ;; :preloads        [day8.re-frame-10x.preload]
+ 
+ :pretty-print true
+ :source-map   true}

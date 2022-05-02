@@ -1,27 +1,18 @@
 (ns ^:figwheel-hooks flowtext.core
-  (:require [flowtext.components.editor :refer [editor]]
-            [flowtext.controllers.line :as lines]
-            [flowtext.controllers.select :as select]
-            [flowtext.effects :as effects]
-            [citrus.core :as citrus]
-            [rum.core :as r]))
+  (:require [reagent.dom :as rd]
+            [reagent.core :as re]
+            [re-frame.core :as rf]
+            [flowtext.events :as event]
+            [flowtext.com.layout :refer [Layout]]))
 
 (enable-console-print!)
 
-(defonce reconciler
-  (citrus/reconciler
-    {:state           (atom {})
-     :controllers     {:lines  lines/control
-                       :select select/control}
-     :effect-handlers {:input    effects/input
-                       :dispatch effects/dispatch}}))
-
-(defonce init-controllers
-  (citrus/broadcast! reconciler :init))
-
 (defn ^:after-load re-render []
-  (r/mount
-    (editor reconciler)
+  (rf/clear-subscription-cache!)
+  (rd/render
+    [Layout]
     (.getElementById js/document "root")))
 
-(defonce start-up (re-render))
+(defonce start-up
+  (do (rf/dispatch-sync [::event/init-state])
+      (re-render)))
