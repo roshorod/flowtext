@@ -62,4 +62,4 @@
   ::selection-info
   (fn [cofx]
     (let [selection (js/getSelection)]
-      (assoc cofx :selection-info (get-token-info selection)))))
+      (assoc cofx :selection (get-token-info selection)))))

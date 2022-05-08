@@ -8,10 +8,15 @@
 
 (def EditorHandler
   (fn [event]
-    (let []
-      (when (spec/text? (.-key event))
-        (.preventDefault event)
-        (rf/dispatch [::event/token-insert-char (.-key event)])))))
+    (let [key (.-key event)]
+      (cond
+        (spec/text? key)
+        (do (.preventDefault event)
+            (rf/dispatch [::event/token-insert-char key]))
+        
+        (spec/backspace? key)
+        (do (.preventDefault event)
+            (rf/dispatch [::event/token-delete-char]))))))
 
 (def EditorSelection
   (fn []
@@ -19,7 +24,7 @@
 
 (defn EditorWrapper [fun]
   (r/create-class
-    {:display-name         "EditorWrapper"
+    {:display-name         ""
      :component-did-update EditorSelection
      :reagent-render       fun}))
 
@@ -32,6 +37,7 @@
         :suppress-content-editable-warning true
         :on-key-down                       EditorHandler}
        (map-indexed
-         (fn [index line]
-           ^{:key index}[l/Line index line])
+         (fn [idx line]
+           ^{:key idx}
+           [l/Line idx (reduce into (rest line))])
          @lines)])))

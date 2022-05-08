@@ -2,7 +2,6 @@
   (:require [flowtext.com.token :as t]))
 
 (defn Line [index {:keys [tokens]}]
-  ^{:key index}
   [:div.line-wrapper
    [:span.line-number
     {:content-editable false}
@@ -12,5 +11,5 @@
     (map-indexed
       (fn [idx token]
         ^{:key idx}
-        [t/Token idx token])
+        [t/Token idx (reduce into (rest token))])
       tokens)]])

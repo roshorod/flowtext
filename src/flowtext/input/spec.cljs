@@ -37,10 +37,18 @@
 (s/def ::nil-offset (s/and number? zero?))
 (s/def ::offset (s/and number? pos-int?))
 
-(def wrap-offset?
+(def first-line 0)
+(def first-token 0)
+
+(def can-concat?
+  (fn [line token]
+    (not (and (= line first-line)
+              (= token first-token)))))
+
+(def wrap-back?
   (fn [offset line token]
     (and (s/valid? ::nil-offset offset)
          (s/valid? ::offset line)
          (s/valid? ::nil-offset token))))
-(def start-offset? #(s/valid? ::nil-offset %))
-(def offset? #(s/valid? ::offset %))
+(def token-start? #(s/valid? ::nil-offset %))
+(def token-body? #(s/valid? ::offset %))
