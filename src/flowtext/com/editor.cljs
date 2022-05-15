@@ -9,6 +9,7 @@
 (def EditorHandler
   (fn [event]
     (let [key (.-key event)]
+      (.preventDefault event)
       (cond
         (spec/text? key)
         (do (.preventDefault event)

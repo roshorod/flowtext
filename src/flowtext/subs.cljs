@@ -63,3 +63,11 @@
   (fn [cofx]
     (let [selection (js/getSelection)]
       (assoc cofx :selection (get-token-info selection)))))
+
+(rf/reg-cofx
+  ::has-next-token?
+  (fn [{:keys [db selection] :as cofx}]
+    (let [token      (:token selection)
+          line       (:line selection)
+          next-token (get-in db [:lines line :tokens (inc token)])]
+      (assoc cofx :has-next-token? (some? next-token)))))
