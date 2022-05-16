@@ -204,12 +204,15 @@
   ::token-concat
   token-from-interceptors
   (fn [{:keys [tokens selection]} [x y]]
-    (let [line  (:line selection)
-          token (:token selection)]
-      {:fx [[:dispatch [::token-update
-                        {:line line :token (dec token)}
-                        (reduce token-concat tokens)]]
-            [:dispatch [::token-delete selection]]]})))
+    (let [line       (:line selection)
+          token      (:token selection)
+          token-new  (reduce token-concat tokens)
+          token-info {:line   line
+                      :token  (dec token)
+                      :offset (count (:content (first tokens)))}]
+      {:dispatch-n [[::token-update token-info token-new]
+                    [::token-delete selection]
+                    [::cursor-update token-info]]})))
 
 (defn normalize-tokens-vec [form]
   (reduce
@@ -254,10 +257,10 @@
 
 (rf/reg-event-fx
   ::token-delete-char
-  (conj
-    token-interceptors
-    (rf/inject-cofx ::subs/has-next-token?))
-  (fn [{:keys [token selection has-next-token?]} _]
+  (conj token-interceptors
+        [(rf/inject-cofx ::subs/has-next-token?)
+         (rf/inject-cofx ::subs/prev-token-info)])
+  (fn [{:keys [token selection has-next-token? prev-token-info]} _]
     (let [token-id (:token selection)
           line-id  (:line selection)
           offset   (:offset selection)]
@@ -289,20 +292,15 @@
                 
                 (if (or (not= line-id 0)
                         (not= token-id 0))
-                  ;; `TODO`: make better cursor selection
                   {:dispatch-n [[::line-delete line-id]
-                                [::cursor-update
-                                 (-> selection
-                                     (assoc :line (dec line-id)))]]}
+                                [::cursor-update prev-token-info]]}
                   
                   (prn "Last char on editor. Do something for last char"))))
             
             {:dispatch-n [[::token-update selection token]
                           [::cursor-update
                            (-> selection
-                               (assoc :offset (dec offset)))]]})
-          
-          )))))
+                               (assoc :offset (dec offset)))]]}))))))
 
 (rf/reg-event-fx
   ::token-insert-char
