@@ -3,3 +3,4 @@
 main.js
 out
 .nrepl-port
+.DS_Store

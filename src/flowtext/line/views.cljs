@@ -1,5 +1,5 @@
-(ns ^:fighweel-always flowtext.com.line
-  (:require [flowtext.com.token :as t]))
+(ns ^:fighweel-always flowtext.line.views
+  (:require [flowtext.token.views :as t]))
 
 (defn Line [index {:keys [tokens]}]
   [:div.line-wrapper
@@ -13,3 +13,4 @@
         ^{:key idx}
         [t/Token idx (reduce into (rest token))])
       tokens)]])
+c
